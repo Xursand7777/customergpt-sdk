@@ -1,5 +1,5 @@
 export const DEFAULT_BASE_URL = 'https://api.customergpt.ai';
-export const VERSION = '0.4.0';
+export const VERSION = '0.5.0';
 
 export class CustomerGPTError extends Error {
   constructor(message, {code = 'REQUEST_FAILED', status, hint, job, requestId} = {}) {
