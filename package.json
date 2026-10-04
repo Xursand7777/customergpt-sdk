@@ -1,6 +1,6 @@
 {
   "name": "@customergpt/sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Official CustomerGPT SDK for TypeScript and JavaScript — a typed, zero-dependency client for chatbots, knowledge, conversations, leads, messages and onboarding.",
   "type": "module",
   "main": "./src/index.mjs",
