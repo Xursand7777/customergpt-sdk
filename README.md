@@ -40,7 +40,7 @@ const job = await client.knowledge.addFile(bot.id, { name: 'handbook.pdf', data:
 await client.jobs.wait(job);
 ```
 
-In a browser, pass a `File` from an `<input type="file">` as `data` (from your server, so the API key stays private).
+`data` can also be a `Blob` or `File`, for example when your server or edge function forwards a user's upload. Keep the call server-side so the API key stays private.
 
 ## Try without an account
 
