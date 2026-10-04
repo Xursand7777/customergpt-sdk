@@ -8,7 +8,8 @@ function mockFetch(responses) {
   const fetch = async (url, options) => {
     seen.push({url, options, body: options.body && JSON.parse(options.body)});
     const next = typeof responses === 'function' ? responses(seen.at(-1)) : responses.shift();
-    return {ok: (next.status ?? 200) < 400, status: next.status ?? 200, json: async () => next.body};
+    const headers = new Headers(next.headers);
+    return {ok: (next.status ?? 200) < 400, status: next.status ?? 200, headers, json: async () => next.body};
   };
   return {fetch, seen};
 }
@@ -48,6 +49,20 @@ test('server errors become CustomerGPTError with code and status', async () => {
   const {fetch} = mockFetch([{status: 401, body: {ok: false, error: {code: 'UNAUTHORIZED', message: 'API key required'}}}]);
   const client = new CustomerGPT({fetch});
   await assert.rejects(client.account.usage(), error => error instanceof CustomerGPTError && error.code === 'UNAUTHORIZED' && error.status === 401 && Boolean(error.hint));
+});
+
+test('errors carry the request ID from the envelope, falling back to the header', async () => {
+  const {fetch} = mockFetch([
+    {status: 404, headers: {'X-Request-Id': 'from-header-1'}, body: {ok: false, error: {code: 'HTTP_404', message: 'Not found'}, meta: {requestId: 'from-meta-1'}}},
+    {status: 500, headers: {'X-Request-Id': 'from-header-2'}, body: {ok: false, error: {code: 'INTERNAL_ERROR', message: 'Failed'}}},
+    {status: 502, headers: {'X-Request-Id': 'from-header-3'}, body: undefined},
+    {status: 500, body: {ok: false, error: {code: 'INTERNAL_ERROR', message: 'Failed'}}},
+  ]);
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await assert.rejects(client.account.usage(), {code: 'HTTP_404', requestId: 'from-meta-1'});
+  await assert.rejects(client.account.usage(), {code: 'INTERNAL_ERROR', requestId: 'from-header-2'});
+  await assert.rejects(client.account.usage(), {code: 'HTTP_502', requestId: 'from-header-3'});
+  await assert.rejects(client.account.usage(), error => error.code === 'INTERNAL_ERROR' && !('requestId' in error));
 });
 
 test('jobs.wait polls with the draft token until ready', async () => {

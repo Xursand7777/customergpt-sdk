@@ -2,13 +2,14 @@ export const DEFAULT_BASE_URL = 'https://api.customergpt.ai';
 export const VERSION = '0.4.0';
 
 export class CustomerGPTError extends Error {
-  constructor(message, {code = 'REQUEST_FAILED', status, hint, job} = {}) {
+  constructor(message, {code = 'REQUEST_FAILED', status, hint, job, requestId} = {}) {
     super(message);
     this.name = 'CustomerGPTError';
     this.code = code;
     if (status !== undefined) this.status = status;
     if (hint) this.hint = hint;
     if (job) this.job = job;
+    if (requestId) this.requestId = requestId;
   }
 }
 
@@ -118,10 +119,13 @@ export class CustomerGPT {
       throw new CustomerGPTError(error.name === 'TimeoutError' ? 'Request timed out' : 'Network error: ' + error.message, {code: error.name === 'TimeoutError' ? 'TIMEOUT' : 'NETWORK_ERROR'});
     }
     const result = await response.json().catch(() => undefined);
-    if (!result) throw new CustomerGPTError('The server did not return JSON', {code: 'HTTP_' + response.status, status: response.status});
+    const headerId = response.headers?.get?.('x-request-id') || undefined;
+    if (!result) throw new CustomerGPTError('The server did not return JSON', {code: 'HTTP_' + response.status, status: response.status, requestId: headerId});
     if (!response.ok || result.ok === false) {
+      const metaId = result.meta?.requestId;
       throw new CustomerGPTError(result.error?.message || result.message || 'Request failed', {
         code: result.error?.code || 'HTTP_' + response.status, status: response.status,
+        requestId: typeof metaId === 'string' && metaId ? metaId : headerId,
         hint: response.status === 401 ? 'Pass apiKey or set CUSTOMERGPT_API_KEY.' : undefined,
       });
     }

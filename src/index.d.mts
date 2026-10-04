@@ -74,6 +74,8 @@ export declare class CustomerGPTError extends Error {
   readonly hint?: string;
   /** Last known job state for WAIT_TIMEOUT and TRAINING_FAILED. */
   readonly job?: Job;
+  /** Server request ID (envelope `meta.requestId`, else the X-Request-Id header). Quote it to support; it is not a secret. */
+  readonly requestId?: string;
 }
 
 export declare class CustomerGPT {

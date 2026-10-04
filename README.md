@@ -82,6 +82,8 @@ await client.chatbots.delete(botId, { dryRun: true }); // { name, sources, conve
 
 Failures throw `CustomerGPTError` with `code`, `status` and, when helpful, `hint`. `jobs.wait` throws `TRAINING_FAILED` or `WAIT_TIMEOUT` and attaches the last known `job` so you can resume.
 
+Errors returned by the server also carry `requestId`, taken from the envelope's `meta.requestId` or, failing that, the `X-Request-Id` response header. It is not a secret: log it and quote it to support@customergpt.ai so the failing request can be found in server logs. Timeouts and network errors never reached the server, so they have none.
+
 ```ts
 import { CustomerGPTError } from '@customergpt/sdk';
 
@@ -89,6 +91,7 @@ try {
   await client.account.usage();
 } catch (error) {
   if (error instanceof CustomerGPTError && error.status === 401) console.error(error.hint);
+  else if (error instanceof CustomerGPTError) console.error(error.code, error.requestId);
 }
 ```
 
