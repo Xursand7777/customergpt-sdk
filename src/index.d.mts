@@ -42,7 +42,38 @@ export interface Chatbot {
   welcomeMessage?: string;
   primaryColor?: string;
   quickPrompts?: string[];
+  calendarLink?: string | null;
+  salesConfig?: SalesConfig;
   [key: string]: unknown;
+}
+/** How the assistant behaves. Instructions and handoff apply while `enabled` is true. */
+export interface SalesConfig {
+  enabled: boolean;
+  /** Up to 6000 characters. */
+  instructions: string;
+  /** Up to 12; keys are lowercase snake_case and unique. */
+  qualificationFields: { key: string; label: string; required: boolean }[];
+  bookingEnabled: boolean;
+  /** HTTPS link the assistant may share, or ''. */
+  checkoutUrl: string;
+  /** Up to 30 phrases that hand the chat to a human. */
+  handoffKeywords: string[];
+  hubspotEnabled: boolean;
+  proactive: { enabled: boolean; pathPrefix: string; delaySeconds: number; message: string };
+}
+export type SalesConfigPatch = Partial<Omit<SalesConfig, 'proactive'>> & { proactive?: Partial<SalesConfig['proactive']> };
+export interface ChatbotUpdate {
+  name?: string;
+  websiteUrl?: string;
+  welcomeMessage?: string;
+  /** #RRGGBB */
+  primaryColor?: string;
+  /** Conversation starters, up to 10; [] clears them. */
+  quickPrompts?: string[];
+  /** HTTPS Cal.com booking link; null disconnects it. */
+  calendarLink?: string | null;
+  /** Merged into the current settings; null restores defaults. */
+  salesConfig?: SalesConfigPatch | null;
 }
 export interface ChatbotDeletion {
   chatbotId: string;
@@ -135,7 +166,8 @@ export declare class CustomerGPT {
     list(params?: Pagination): Promise<unknown>;
     get(chatbotId: string): Promise<Chatbot>;
     create(params: { name: string; websiteUrl: string }, options?: WriteOptions): Promise<Chatbot>;
-    update(chatbotId: string, params: { name?: string; websiteUrl?: string; welcomeMessage?: string; primaryColor?: string; quickPrompts?: string[] }, options?: WriteOptions): Promise<Chatbot>;
+    /** Update fields and behaviour. With `dryRun` it validates and returns the resulting settings without saving. */
+    update(chatbotId: string, params: ChatbotUpdate, options?: WriteOptions): Promise<Chatbot>;
     /** Permanently delete a chatbot with its knowledge, conversations and leads. Refused while it is training. With `dryRun` it returns what would be removed. */
     delete(chatbotId: string, options?: WriteOptions): Promise<ChatbotDeletion>;
     installSnippet(chatbotId: string): Promise<unknown>;

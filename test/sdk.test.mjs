@@ -197,3 +197,10 @@ test('messages.reply, conversations.tag and bulkUpdate map to their actions', as
   assert.deepEqual(seen[1].body, {chatbotId: 'c1', conversationId: 'v1', addTags: ['vip'], removeTags: ['cold'], confirm: true});
   assert.deepEqual(seen[2].body, {chatbotId: 'c1', conversationIds: ['v1', 'v2'], status: 'closed', addTags: ['done'], dryRun: true, confirm: false});
 });
+
+test('chatbots.update passes behaviour settings through', async () => {
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: {}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await client.chatbots.update('c1', {quickPrompts: [], calendarLink: null, salesConfig: {enabled: true, handoffKeywords: ['manager']}}, {dryRun: true});
+  assert.deepEqual(seen[0].body, {chatbotId: 'c1', quickPrompts: [], calendarLink: null, salesConfig: {enabled: true, handoffKeywords: ['manager']}, dryRun: true, confirm: false});
+});

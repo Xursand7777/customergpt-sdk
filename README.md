@@ -50,6 +50,15 @@ const { trained } = await client.knowledge.wait(bot.id, { timeoutMs: 600_000 });
 
 It throws `TRAINING_FAILED` if training seen during the wait failed and `WAIT_TIMEOUT` on timeout; `error.training` lists the runs.
 
+Change behaviour (dry run first to see the resulting settings):
+
+```ts
+await client.chatbots.update(bot.id, {
+  quickPrompts: ['Pricing?', 'Book a demo'],
+  salesConfig: { enabled: true, instructions: 'Qualify the budget before offering a demo.', handoffKeywords: ['manager'] },
+}, { dryRun: true });
+```
+
 ## Try without an account
 
 ```ts
