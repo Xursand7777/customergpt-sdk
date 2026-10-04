@@ -97,6 +97,16 @@ export class CustomerGPT {
     });
     this.account = Object.freeze({
       usage: () => call('account_usage', {}),
+      limits: () => call('account_limits', {}),
+    });
+    this.tokens = Object.freeze({
+      list: () => call('tokens_list', {}),
+      create: (params = {}, options) => call('tokens_create', write(drop({name: params.name}), options)),
+      revoke: (tokenId, options) => call('tokens_revoke', write({tokenId}, options)),
+    });
+    this.members = Object.freeze({
+      list: () => call('members_list', {}),
+      remove: (memberId, options) => call('members_remove', write({memberId}, options)),
     });
     this.jobs = Object.freeze({
       get: (jobId, params = {}) => call('jobs_get', drop({jobId, token: params.token})),

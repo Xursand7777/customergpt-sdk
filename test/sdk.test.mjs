@@ -204,3 +204,18 @@ test('chatbots.update passes behaviour settings through', async () => {
   await client.chatbots.update('c1', {quickPrompts: [], calendarLink: null, salesConfig: {enabled: true, handoffKeywords: ['manager']}}, {dryRun: true});
   assert.deepEqual(seen[0].body, {chatbotId: 'c1', quickPrompts: [], calendarLink: null, salesConfig: {enabled: true, handoffKeywords: ['manager']}, dryRun: true, confirm: false});
 });
+
+test('account.limits, tokens and members map to their actions', async () => {
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: {}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await client.account.limits();
+  await client.tokens.list();
+  await client.tokens.create({name: 'CI'});
+  await client.tokens.revoke('t1', {dryRun: true});
+  await client.members.list();
+  await client.members.remove('m1');
+  assert.deepEqual(seen.map(s => s.url.split('/').pop()), ['account_limits', 'tokens_list', 'tokens_create', 'tokens_revoke', 'members_list', 'members_remove']);
+  assert.deepEqual(seen[2].body, {name: 'CI', confirm: true});
+  assert.deepEqual(seen[3].body, {tokenId: 't1', dryRun: true, confirm: false});
+  assert.deepEqual(seen[5].body, {memberId: 'm1', confirm: true});
+});

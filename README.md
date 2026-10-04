@@ -81,7 +81,9 @@ Draft tokens are secrets and expire after 24 hours.
 | `conversations` | `list`, `get`, `update`, `tag`, `bulkUpdate` |
 | `leads` | `list` |
 | `analytics` | `get` |
-| `account` | `usage` |
+| `account` | `usage`, `limits` |
+| `tokens` | `list`, `create`, `revoke` (owner only; the secret is returned once) |
+| `members` | `list`, `remove` (owner only) |
 | `jobs` | `get`, `wait` |
 | `onboarding` | `start`, `preview`, `claim` |
 | `actions` | `list`, `call` — every server action with its JSON schema |

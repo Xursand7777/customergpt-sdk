@@ -86,6 +86,13 @@ export interface ChatbotDeletion {
   dryRun?: true;
 }
 export interface KnowledgeSource { id: string; name: string; [key: string]: unknown }
+export interface AccountLimits {
+  plan: { tier: string; name: string; price?: number };
+  limits: { chatbots: number; pages: number; characters: number; messagesPerMonth: number; extraMessages?: number; teamMembers: number; apiAccess: boolean; webhooks: boolean; integrations: boolean; [key: string]: unknown };
+  usage: { chatbots: number; pages: number; characters: number; messagesThisMonth: number; teamMembers: number };
+}
+export interface ApiKeySummary { id: string; name: string; keyPrefix: string; current?: boolean; [key: string]: unknown }
+export interface TeamMember { id: string; email: string; role: string; [key: string]: unknown }
 export interface CustomResponse { id: string; question: string; answer: string; [key: string]: unknown }
 export interface Conversation { id: string; status?: 'open' | 'closed'; mode?: 'ai' | 'human'; [key: string]: unknown }
 
@@ -238,7 +245,26 @@ export declare class CustomerGPT {
     list(chatbotId: string, params?: Pagination & { mode?: 'ai' | 'human' }): Promise<unknown>;
   };
   readonly analytics: { get(chatbotId: string): Promise<unknown> };
-  readonly account: { usage(): Promise<unknown> };
+  readonly account: {
+    usage(): Promise<unknown>;
+    /** Plan, its limits and current usage. */
+    limits(): Promise<AccountLimits>;
+  };
+  /** Workspace API keys. Owner only; OAuth sessions need agents:read and agents:write to create one. */
+  readonly tokens: {
+    /** Names and prefixes only; `current` marks the key making this call. */
+    list(): Promise<{ items: ApiKeySummary[] }>;
+    /** The secret is returned once in `key`. Keys have full access and do not expire. */
+    create(params?: { name?: string }, options?: WriteOptions): Promise<ApiKeySummary & { key: string; warning: string }>;
+    /** Permanent; anything using the key stops working. A dry run shows whether it is the current key. */
+    revoke(tokenId: string, options?: WriteOptions): Promise<{ revoked?: true; tokenId: string; current?: boolean; dryRun?: true }>;
+  };
+  /** Team members. Owner only. */
+  readonly members: {
+    list(): Promise<{ items: TeamMember[]; seats: { used: number; limit: number | null } }>;
+    /** Deletes the member account permanently; their sessions and API keys stop working. */
+    remove(memberId: string, options?: WriteOptions): Promise<{ removed?: true; memberId: string; dryRun?: true }>;
+  };
   readonly jobs: {
     get(jobId: string, params?: { token?: string }): Promise<Job>;
     /** Poll until the job leaves pending/running. Throws CustomerGPTError on failure or timeout. */
