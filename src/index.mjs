@@ -51,6 +51,8 @@ export class CustomerGPT {
     this.knowledge = Object.freeze({
       list: (chatbotId, params = {}) => call('sources_list', drop({chatbotId, page: params.page, limit: params.limit})),
       addWebsite: (chatbotId, url, params = {}, options) => call('sources_add', write(drop({chatbotId, url, name: params.name ?? new URL(url).hostname, maxPages: params.maxPages}), options)),
+      addLinks: (chatbotId, urls, params = {}, options) => call('sources_add', write(drop({chatbotId, urls, name: params.name ?? (urls[0] ? new URL(urls[0]).hostname + ' links' : undefined)}), options)),
+      addSitemap: (chatbotId, sitemapUrl, params = {}, options) => call('sources_add', write(drop({chatbotId, sitemapUrl, name: params.name ?? new URL(sitemapUrl).hostname + ' sitemap', maxPages: params.maxPages}), options)),
       addText: (chatbotId, params, options) => call('sources_add', write(drop({chatbotId, name: params.name, content: params.content}), options)),
       resync: (chatbotId, sourceId, params = {}, options) => call('sources_sync', write(drop({chatbotId, sourceId, maxPages: params.maxPages}), options)),
       delete: (chatbotId, sourceId, options) => call('sources_delete', write({chatbotId, sourceId}, options)),

@@ -100,6 +100,10 @@ export declare class CustomerGPT {
     list(chatbotId: string, params?: Pagination): Promise<unknown>;
     /** Crawl a public website. Returns a training job; pass it to jobs.wait. */
     addWebsite(chatbotId: string, url: string, params?: { name?: string; maxPages?: number }, options?: WriteOptions): Promise<Job>;
+    /** Train on exactly these pages (1–20) without following their links. Returns a training job. */
+    addLinks(chatbotId: string, urls: string[], params?: { name?: string }, options?: WriteOptions): Promise<Job>;
+    /** Train on pages listed in a sitemap.xml on the same site, following a sitemap index. maxPages caps it (default 5, max 20). */
+    addSitemap(chatbotId: string, sitemapUrl: string, params?: { name?: string; maxPages?: number }, options?: WriteOptions): Promise<Job>;
     addText(chatbotId: string, params: { name: string; content: string }, options?: WriteOptions): Promise<Job>;
     resync(chatbotId: string, sourceId: string, params?: { maxPages?: number }, options?: WriteOptions): Promise<Job>;
     delete(chatbotId: string, sourceId: string, options?: WriteOptions): Promise<unknown>;

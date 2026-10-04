@@ -86,3 +86,12 @@ test('chatbots.delete confirms by default and supports a dry run', async () => {
   assert.deepEqual(seen[0].body, {chatbotId: 'c1', dryRun: true, confirm: false});
   assert.deepEqual(seen[1].body, {chatbotId: 'c1', confirm: true});
 });
+
+test('knowledge.addLinks and addSitemap send their inputs with default names', async () => {
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: {id: 'j', status: 'pending'}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await client.knowledge.addLinks('c1', ['https://docs.example.com/a', 'https://docs.example.com/b']);
+  await client.knowledge.addSitemap('c1', 'https://example.com/sitemap.xml', {maxPages: 20}, {dryRun: true});
+  assert.deepEqual(seen[0].body, {chatbotId: 'c1', urls: ['https://docs.example.com/a', 'https://docs.example.com/b'], name: 'docs.example.com links', confirm: true});
+  assert.deepEqual(seen[1].body, {chatbotId: 'c1', sitemapUrl: 'https://example.com/sitemap.xml', name: 'example.com sitemap', maxPages: 20, dryRun: true, confirm: false});
+});

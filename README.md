@@ -48,7 +48,7 @@ Draft tokens are secrets and expire after 24 hours.
 | Resource | Methods |
 | --- | --- |
 | `chatbots` | `list`, `get`, `create`, `update`, `delete`, `installSnippet` |
-| `knowledge` | `list`, `addWebsite`, `addText`, `resync`, `delete` |
+| `knowledge` | `list`, `addWebsite`, `addLinks`, `addSitemap`, `addText`, `resync`, `delete` |
 | `messages` | `send` |
 | `conversations` | `list`, `get`, `update` |
 | `leads` | `list` |
