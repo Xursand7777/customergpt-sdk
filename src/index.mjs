@@ -71,6 +71,12 @@ export class CustomerGPT {
       addText: (chatbotId, params, options) => call('sources_add', write(drop({chatbotId, name: params.name, content: params.content}), options)),
       resync: (chatbotId, sourceId, params = {}, options) => call('sources_sync', write(drop({chatbotId, sourceId, maxPages: params.maxPages}), options)),
       delete: (chatbotId, sourceId, options) => call('sources_delete', write({chatbotId, sourceId}, options)),
+      responses: Object.freeze({
+        list: (chatbotId, params = {}) => call('responses_list', drop({chatbotId, page: params.page, limit: params.limit})),
+        create: (chatbotId, params, options) => call('responses_create', write({chatbotId, question: params.question, answer: params.answer}, options)),
+        update: (chatbotId, responseId, params, options) => call('responses_update', write(drop({chatbotId, responseId, question: params.question, answer: params.answer}), options)),
+        delete: (chatbotId, responseId, options) => call('responses_delete', write({chatbotId, responseId}, options)),
+      }),
     });
     this.messages = Object.freeze({
       send: (chatbotId, message, options) => call('messages_send', write({chatbotId, message}, options)),

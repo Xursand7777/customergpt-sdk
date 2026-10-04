@@ -55,6 +55,7 @@ export interface ChatbotDeletion {
   dryRun?: true;
 }
 export interface KnowledgeSource { id: string; name: string; [key: string]: unknown }
+export interface CustomResponse { id: string; question: string; answer: string; [key: string]: unknown }
 export interface Conversation { id: string; status?: 'open' | 'closed'; mode?: 'ai' | 'human'; [key: string]: unknown }
 
 export interface ActionDefinition {
@@ -162,6 +163,17 @@ export declare class CustomerGPT {
     addText(chatbotId: string, params: { name: string; content: string }, options?: WriteOptions): Promise<Job>;
     resync(chatbotId: string, sourceId: string, params?: { maxPages?: number }, options?: WriteOptions): Promise<Job>;
     delete(chatbotId: string, sourceId: string, options?: WriteOptions): Promise<unknown>;
+    /**
+     * Fixed answers to specific questions. A visitor question that matches one ignoring case and
+     * punctuation is answered verbatim; similar wording gets it as top-priority context.
+     */
+    readonly responses: {
+      list(chatbotId: string, params?: Pagination): Promise<{ items: CustomResponse[]; total: number; page: number; limit: number }>;
+      /** question up to 500 characters, answer up to 4000, at most 200 per chatbot. */
+      create(chatbotId: string, params: { question: string; answer: string }, options?: WriteOptions): Promise<CustomResponse>;
+      update(chatbotId: string, responseId: string, params: { question?: string; answer?: string }, options?: WriteOptions): Promise<CustomResponse>;
+      delete(chatbotId: string, responseId: string, options?: WriteOptions): Promise<{ id: string; deleted: true }>;
+    };
   };
   readonly messages: {
     /** Preview answer from a bot. Uses message quota. */

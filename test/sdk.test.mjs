@@ -171,3 +171,17 @@ test('knowledge.wait times out with what is still training', async () => {
   const client = new CustomerGPT({apiKey: 'k', fetch});
   await assert.rejects(client.knowledge.wait('c1', {timeoutMs: 5, intervalMs: 1}), error => error.code === 'WAIT_TIMEOUT' && error.training.active[0].name === 'Docs');
 });
+
+test('knowledge.responses maps to the custom response actions', async () => {
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: {}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await client.knowledge.responses.list('c1', {limit: 10});
+  await client.knowledge.responses.create('c1', {question: 'Refunds?', answer: 'Within 30 days.'});
+  await client.knowledge.responses.update('c1', 'r1', {answer: 'Within 14 days.'});
+  await client.knowledge.responses.delete('c1', 'r1', {dryRun: true});
+  assert.deepEqual(seen.map(s => s.url.split('/').pop()), ['responses_list', 'responses_create', 'responses_update', 'responses_delete']);
+  assert.deepEqual(seen[0].body, {chatbotId: 'c1', limit: 10});
+  assert.deepEqual(seen[1].body, {chatbotId: 'c1', question: 'Refunds?', answer: 'Within 30 days.', confirm: true});
+  assert.deepEqual(seen[2].body, {chatbotId: 'c1', responseId: 'r1', answer: 'Within 14 days.', confirm: true});
+  assert.deepEqual(seen[3].body, {chatbotId: 'c1', responseId: 'r1', dryRun: true, confirm: false});
+});
