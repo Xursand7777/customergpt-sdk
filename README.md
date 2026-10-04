@@ -31,6 +31,17 @@ const snippet = await client.chatbots.installSnippet(bot.id);
 
 Create an API key in the [CustomerGPT dashboard](https://dashboard.customergpt.ai). Authenticated calls require a plan with API access.
 
+Train on documents (`.pdf`, `.docx`, `.md`, `.txt`, `.csv`, up to 10 MB):
+
+```ts
+import { readFile } from 'node:fs/promises';
+
+const job = await client.knowledge.addFile(bot.id, { name: 'handbook.pdf', data: await readFile('./handbook.pdf') });
+await client.jobs.wait(job);
+```
+
+In a browser, pass a `File` from an `<input type="file">` as `data` (from your server, so the API key stays private).
+
 ## Try without an account
 
 ```ts
@@ -48,7 +59,7 @@ Draft tokens are secrets and expire after 24 hours.
 | Resource | Methods |
 | --- | --- |
 | `chatbots` | `list`, `get`, `create`, `update`, `delete`, `installSnippet` |
-| `knowledge` | `list`, `addWebsite`, `addLinks`, `addSitemap`, `addText`, `resync`, `delete` |
+| `knowledge` | `list`, `addWebsite`, `addLinks`, `addSitemap`, `addFile`, `addText`, `resync`, `delete` |
 | `messages` | `send` |
 | `conversations` | `list`, `get`, `update` |
 | `leads` | `list` |

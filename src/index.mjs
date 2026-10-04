@@ -25,6 +25,17 @@ function normalizeBase(value) {
 const write = (input, options = {}) => options.dryRun ? {...input, dryRun: true, confirm: false} : {...input, confirm: true};
 const drop = value => Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined));
 
+/** Base64 of file bytes in any runtime: Buffer where it exists, btoa elsewhere. */
+async function toBase64(data) {
+  if (typeof data === 'string') return data;
+  if (typeof Blob !== 'undefined' && data instanceof Blob) data = await data.arrayBuffer();
+  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+  if (typeof Buffer !== 'undefined') return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('base64');
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary);
+}
+
 export class CustomerGPT {
   #baseUrl; #apiKey; #timeoutMs; #fetch;
 
@@ -53,6 +64,7 @@ export class CustomerGPT {
       addWebsite: (chatbotId, url, params = {}, options) => call('sources_add', write(drop({chatbotId, url, name: params.name ?? new URL(url).hostname, maxPages: params.maxPages}), options)),
       addLinks: (chatbotId, urls, params = {}, options) => call('sources_add', write(drop({chatbotId, urls, name: params.name ?? (urls[0] ? new URL(urls[0]).hostname + ' links' : undefined)}), options)),
       addSitemap: (chatbotId, sitemapUrl, params = {}, options) => call('sources_add', write(drop({chatbotId, sitemapUrl, name: params.name ?? new URL(sitemapUrl).hostname + ' sitemap', maxPages: params.maxPages}), options)),
+      addFile: async (chatbotId, file, params = {}, options) => call('sources_add', write({chatbotId, name: params.name ?? file.name, file: {name: file.name, data: await toBase64(file.data)}}, options)),
       addText: (chatbotId, params, options) => call('sources_add', write(drop({chatbotId, name: params.name, content: params.content}), options)),
       resync: (chatbotId, sourceId, params = {}, options) => call('sources_sync', write(drop({chatbotId, sourceId, maxPages: params.maxPages}), options)),
       delete: (chatbotId, sourceId, options) => call('sources_delete', write({chatbotId, sourceId}, options)),

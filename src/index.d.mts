@@ -104,6 +104,11 @@ export declare class CustomerGPT {
     addLinks(chatbotId: string, urls: string[], params?: { name?: string }, options?: WriteOptions): Promise<Job>;
     /** Train on pages listed in a sitemap.xml on the same site, following a sitemap index. maxPages caps it (default 5, max 20). */
     addSitemap(chatbotId: string, sitemapUrl: string, params?: { name?: string; maxPages?: number }, options?: WriteOptions): Promise<Job>;
+    /**
+     * Train on a .pdf, .docx, .md, .txt or .csv document up to 10 MB. The server extracts the text.
+     * `data` is the file content: bytes (Uint8Array, Buffer, ArrayBuffer), a Blob/File, or a base64 string.
+     */
+    addFile(chatbotId: string, file: { name: string; data: Uint8Array | ArrayBuffer | Blob | string }, params?: { name?: string }, options?: WriteOptions): Promise<Job>;
     addText(chatbotId: string, params: { name: string; content: string }, options?: WriteOptions): Promise<Job>;
     resync(chatbotId: string, sourceId: string, params?: { maxPages?: number }, options?: WriteOptions): Promise<Job>;
     delete(chatbotId: string, sourceId: string, options?: WriteOptions): Promise<unknown>;

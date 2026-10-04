@@ -95,3 +95,31 @@ test('knowledge.addLinks and addSitemap send their inputs with default names', a
   assert.deepEqual(seen[0].body, {chatbotId: 'c1', urls: ['https://docs.example.com/a', 'https://docs.example.com/b'], name: 'docs.example.com links', confirm: true});
   assert.deepEqual(seen[1].body, {chatbotId: 'c1', sitemapUrl: 'https://example.com/sitemap.xml', name: 'example.com sitemap', maxPages: 20, dryRun: true, confirm: false});
 });
+
+test('knowledge.addFile sends base64 from bytes, Blob or a base64 string', async () => {
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: {id: 'j', status: 'pending'}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  const bytes = new TextEncoder().encode('# FAQ\nOpen 9-18');
+  const base64 = Buffer.from(bytes).toString('base64');
+  await client.knowledge.addFile('c1', {name: 'faq.md', data: bytes});
+  await client.knowledge.addFile('c1', {name: 'faq.md', data: new Blob([bytes])}, {name: 'FAQ'});
+  await client.knowledge.addFile('c1', {name: 'faq.md', data: base64}, {}, {dryRun: true});
+  assert.deepEqual(seen[0].body, {chatbotId: 'c1', name: 'faq.md', file: {name: 'faq.md', data: base64}, confirm: true});
+  assert.equal(seen[1].body.name, 'FAQ');
+  assert.equal(seen[1].body.file.data, base64);
+  assert.deepEqual(seen[2].body.file, {name: 'faq.md', data: base64});
+  assert.equal(seen[2].body.dryRun, true);
+});
+
+test('base64 encoding works without Buffer (browsers, edge runtimes)', async () => {
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: {}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  const bytes = new Uint8Array(70000).map((_, i) => i % 256);
+  const expected = Buffer.from(bytes).toString('base64');
+  const saved = globalThis.Buffer;
+  try {
+    globalThis.Buffer = undefined;
+    await client.knowledge.addFile('c1', {name: 'data.csv', data: bytes.buffer});
+  } finally { globalThis.Buffer = saved; }
+  assert.equal(seen[0].body.file.data, expected);
+});
