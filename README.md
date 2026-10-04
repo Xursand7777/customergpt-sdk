@@ -42,6 +42,14 @@ await client.jobs.wait(job);
 
 `data` can also be a `Blob` or `File`, for example when your server or edge function forwards a user's upload. Keep the call server-side so the API key stays private.
 
+Wait for everything a bot is training, including sources added from the dashboard:
+
+```ts
+const { trained } = await client.knowledge.wait(bot.id, { timeoutMs: 600_000 });
+```
+
+It throws `TRAINING_FAILED` if training seen during the wait failed and `WAIT_TIMEOUT` on timeout; `error.training` lists the runs.
+
 ## Try without an account
 
 ```ts
@@ -59,7 +67,7 @@ Draft tokens are secrets and expire after 24 hours.
 | Resource | Methods |
 | --- | --- |
 | `chatbots` | `list`, `get`, `create`, `update`, `delete`, `installSnippet` |
-| `knowledge` | `list`, `addWebsite`, `addLinks`, `addSitemap`, `addFile`, `addText`, `resync`, `delete` |
+| `knowledge` | `list`, `addWebsite`, `addLinks`, `addSitemap`, `addFile`, `addText`, `resync`, `delete`, `status`, `wait` |
 | `messages` | `send` |
 | `conversations` | `list`, `get`, `update` |
 | `leads` | `list` |

@@ -138,3 +138,36 @@ test('base64 encoding works without Buffer (browsers, edge runtimes)', async () 
   } finally { globalThis.Buffer = saved; }
   assert.equal(seen[0].body.file.data, expected);
 });
+
+test('knowledge.wait polls training_status until idle and reports what trained', async () => {
+  const t0 = '2026-10-05T00:00:00.000Z';
+  const replies = [
+    {chatbotId: 'c1', idle: false, active: [{jobId: 'j1', sourceId: 's1', name: 'Docs', status: 'running'}], failed: [{jobId: 'old', sourceId: 's0', name: 'Old', error: 'x', failedAt: '2026-10-01T00:00:00.000Z'}], checkedAt: t0},
+    {chatbotId: 'c1', idle: true, active: [], failed: [{jobId: 'old', sourceId: 's0', name: 'Old', error: 'x', failedAt: '2026-10-01T00:00:00.000Z'}], checkedAt: t0},
+  ];
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: replies.shift()}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  const progress = [];
+  const result = await client.knowledge.wait('c1', {intervalMs: 1, onProgress: s => progress.push(s.idle)});
+  assert.equal(seen[0].url.endsWith('/training_status'), true);
+  assert.deepEqual(seen[0].body, {chatbotId: 'c1'});
+  assert.deepEqual(progress, [false, true]);
+  assert.deepEqual(result.trained, [{jobId: 'j1', sourceId: 's1', name: 'Docs'}]);
+  assert.deepEqual(result.failed, [], 'failures from before the wait do not count');
+});
+
+test('knowledge.wait throws TRAINING_FAILED for training that failed during the wait', async () => {
+  const replies = [
+    {chatbotId: 'c1', idle: false, active: [{jobId: 'j1', sourceId: 's1', name: 'Docs'}], failed: [], checkedAt: '2026-10-05T00:00:00.000Z'},
+    {chatbotId: 'c1', idle: true, active: [], failed: [{jobId: 'j1', sourceId: 's1', name: 'Docs', error: 'Crawl blocked', failedAt: '2026-10-05T00:00:05.000Z'}], checkedAt: '2026-10-05T00:00:06.000Z'},
+  ];
+  const {fetch} = mockFetch(() => ({body: {ok: true, data: replies.shift()}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await assert.rejects(client.knowledge.wait('c1', {intervalMs: 1}), error => error.code === 'TRAINING_FAILED' && error.training.failed[0].name === 'Docs');
+});
+
+test('knowledge.wait times out with what is still training', async () => {
+  const {fetch} = mockFetch(() => ({body: {ok: true, data: {chatbotId: 'c1', idle: false, active: [{jobId: 'j1', sourceId: 's1', name: 'Docs'}], failed: [], checkedAt: '2026-10-05T00:00:00.000Z'}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await assert.rejects(client.knowledge.wait('c1', {timeoutMs: 5, intervalMs: 1}), error => error.code === 'WAIT_TIMEOUT' && error.training.active[0].name === 'Docs');
+});

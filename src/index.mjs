@@ -62,6 +62,8 @@ export class CustomerGPT {
     });
     this.knowledge = Object.freeze({
       list: (chatbotId, params = {}) => call('sources_list', drop({chatbotId, page: params.page, limit: params.limit})),
+      status: chatbotId => call('training_status', {chatbotId}),
+      wait: (chatbotId, params = {}) => this.#waitTraining(chatbotId, params),
       addWebsite: (chatbotId, url, params = {}, options) => call('sources_add', write(drop({chatbotId, url, name: params.name ?? new URL(url).hostname, maxPages: params.maxPages}), options)),
       addLinks: (chatbotId, urls, params = {}, options) => call('sources_add', write(drop({chatbotId, urls, name: params.name ?? (urls[0] ? new URL(urls[0]).hostname + ' links' : undefined)}), options)),
       addSitemap: (chatbotId, sitemapUrl, params = {}, options) => call('sources_add', write(drop({chatbotId, sitemapUrl, name: params.name ?? new URL(sitemapUrl).hostname + ' sitemap', maxPages: params.maxPages}), options)),
@@ -144,6 +146,39 @@ export class CustomerGPT {
     }
     if (current.status === 'failed') throw new CustomerGPTError(current.error || 'Training failed', {code: 'TRAINING_FAILED', job: {...job, ...current}});
     return {...job, ...current};
+  }
+
+  // Waits until nothing trains for the bot. Only failures of training seen during
+  // this wait (or reported after it began) count; older failures belong to earlier runs.
+  async #waitTraining(chatbotId, {timeoutMs = 900000, intervalMs = 3000, onProgress} = {}) {
+    const started = Date.now(), deadline = started + timeoutMs;
+    const key = item => item.sourceId ?? item.jobId;
+    const seen = new Map();
+    let since, status;
+    for (;;) {
+      status = await this.knowledge.status(chatbotId);
+      since ??= Date.parse(status.checkedAt);
+      for (const item of status.active) seen.set(key(item), item);
+      onProgress?.(status);
+      if (status.idle) break;
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        const error = new CustomerGPTError(`${status.active.length} training run(s) still in progress`, {code: 'WAIT_TIMEOUT'});
+        error.training = {chatbotId, idle: false, active: status.active};
+        throw error;
+      }
+      await new Promise(resolve => setTimeout(resolve, Math.min(intervalMs, remaining)));
+    }
+    const failed = status.failed.filter(item => seen.has(item.sourceId) || seen.has(item.jobId) || Date.parse(item.failedAt) >= since);
+    const failedKeys = new Set(failed.map(key));
+    const trained = [...seen.values()].filter(item => !failedKeys.has(key(item))).map(({jobId, sourceId, name}) => ({jobId, sourceId, name}));
+    const result = {chatbotId, idle: true, active: [], trained, failed, waitedMs: Date.now() - started};
+    if (failed.length) {
+      const error = new CustomerGPTError(`${failed.length} training run(s) failed: ${failed.map(item => item.name).join(', ')}`, {code: 'TRAINING_FAILED'});
+      error.training = result;
+      throw error;
+    }
+    return result;
   }
 }
 

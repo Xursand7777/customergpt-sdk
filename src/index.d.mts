@@ -76,6 +76,47 @@ export declare class CustomerGPTError extends Error {
   readonly job?: Job;
   /** Server request ID (envelope `meta.requestId`, else the X-Request-Id header). Quote it to support; it is not a secret. */
   readonly requestId?: string;
+  /** For knowledge.wait: what was still training (WAIT_TIMEOUT) or what failed (TRAINING_FAILED). */
+  readonly training?: Partial<TrainingWaitResult> & { chatbotId: string; active: TrainingRun[] };
+}
+
+export interface TrainingRun {
+  jobId: string | null;
+  sourceId: string | null;
+  name: string;
+  status?: string;
+  startedAt?: string;
+}
+export interface FailedTrainingRun {
+  jobId: string | null;
+  sourceId: string;
+  name: string;
+  error: string;
+  failedAt: string;
+}
+export interface TrainingStatus {
+  chatbotId: string;
+  /** True when nothing is queued or training for the bot. */
+  idle: boolean;
+  active: TrainingRun[];
+  /** Sources that failed in the last 24 hours. */
+  failed: FailedTrainingRun[];
+  checkedAt: string;
+}
+export interface TrainingWaitResult {
+  chatbotId: string;
+  idle: true;
+  active: [];
+  trained: { jobId: string | null; sourceId: string | null; name: string }[];
+  failed: FailedTrainingRun[];
+  waitedMs: number;
+}
+export interface TrainingWaitOptions {
+  /** Total wait in milliseconds. Default 900000. */
+  timeoutMs?: number;
+  /** Delay between checks. Default 3000. */
+  intervalMs?: number;
+  onProgress?(status: TrainingStatus): void;
 }
 
 export declare class CustomerGPT {
@@ -100,6 +141,13 @@ export declare class CustomerGPT {
   };
   readonly knowledge: {
     list(chatbotId: string, params?: Pagination): Promise<unknown>;
+    /** What is training for the bot right now, and what failed in the last 24 hours. */
+    status(chatbotId: string): Promise<TrainingStatus>;
+    /**
+     * Wait until nothing trains for the bot. Throws CustomerGPTError TRAINING_FAILED if training
+     * seen during the wait failed, or WAIT_TIMEOUT; `error.training` holds the details.
+     */
+    wait(chatbotId: string, options?: TrainingWaitOptions): Promise<TrainingWaitResult>;
     /** Crawl a public website. Returns a training job; pass it to jobs.wait. */
     addWebsite(chatbotId: string, url: string, params?: { name?: string; maxPages?: number }, options?: WriteOptions): Promise<Job>;
     /** Train on exactly these pages (1–20) without following their links. Returns a training job. */
