@@ -1,0 +1,52 @@
+{
+  "name": "@customergpt/sdk",
+  "version": "0.1.0",
+  "description": "Official CustomerGPT SDK for TypeScript and JavaScript — a typed, zero-dependency client for chatbots, knowledge, conversations, leads, messages and onboarding.",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "types": "./src/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.mts",
+      "import": "./src/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "prepack": "npm test"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "customergpt",
+    "sdk",
+    "api-client",
+    "ai",
+    "chatbot",
+    "ai-agent",
+    "customer-support",
+    "support-automation",
+    "knowledge-base",
+    "typescript"
+  ],
+  "homepage": "https://customergpt.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xursand7777/customergpt-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Xursand7777/customergpt-sdk/issues"
+  }
+}

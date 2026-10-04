@@ -1,0 +1,32 @@
+name: Publish to npm
+
+# Bump "version" in package.json, commit, then push a matching tag (e.g. v0.2.0).
+# Uses npm trusted publishing (OIDC): no NPM_TOKEN secret, provenance is attached automatically.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing requires npm 11.5.1 or later.
+      - run: npm install -g npm@^11.5.1
+      - name: Check tag matches package.json
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "v$version" ]; then echo "::error::Tag $TAG does not match package.json version $version"; exit 1; fi
+      - run: npm ci
+      - run: npm test
+      - run: npm publish --access public
