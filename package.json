@@ -39,7 +39,8 @@
     "customer-support",
     "support-automation",
     "knowledge-base",
-    "typescript"
+    "typescript",
+    "openapi"
   ],
   "homepage": "https://customergpt.ai",
   "repository": {
