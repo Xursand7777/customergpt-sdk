@@ -80,11 +80,14 @@ export class CustomerGPT {
     });
     this.messages = Object.freeze({
       send: (chatbotId, message, options) => call('messages_send', write({chatbotId, message}, options)),
+      reply: (chatbotId, conversationId, text, options) => call('messages_reply', write({chatbotId, conversationId, text}, options)),
     });
     this.conversations = Object.freeze({
       list: (chatbotId, params = {}) => call('conversations_list', drop({chatbotId, page: params.page, limit: params.limit, mode: params.mode, leadsOnly: params.leadsOnly})),
       get: (chatbotId, conversationId, params = {}) => call('conversations_get', drop({chatbotId, conversationId, page: params.page, limit: params.limit})),
       update: (chatbotId, conversationId, params, options) => call('conversations_update', write(drop({chatbotId, conversationId, status: params.status, mode: params.mode}), options)),
+      tag: (chatbotId, conversationId, params, options) => call('conversations_tag', write(drop({chatbotId, conversationId, addTags: params.add, removeTags: params.remove}), options)),
+      bulkUpdate: (chatbotId, conversationIds, params, options) => call('conversations_bulk_update', write(drop({chatbotId, conversationIds, status: params.status, mode: params.mode, addTags: params.addTags, removeTags: params.removeTags}), options)),
     });
     this.leads = Object.freeze({
       list: (chatbotId, params = {}) => this.conversations.list(chatbotId, {...params, leadsOnly: true}),

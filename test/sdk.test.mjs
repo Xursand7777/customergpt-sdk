@@ -185,3 +185,15 @@ test('knowledge.responses maps to the custom response actions', async () => {
   assert.deepEqual(seen[2].body, {chatbotId: 'c1', responseId: 'r1', answer: 'Within 14 days.', confirm: true});
   assert.deepEqual(seen[3].body, {chatbotId: 'c1', responseId: 'r1', dryRun: true, confirm: false});
 });
+
+test('messages.reply, conversations.tag and bulkUpdate map to their actions', async () => {
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: {}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await client.messages.reply('c1', 'v1', 'We will call you today');
+  await client.conversations.tag('c1', 'v1', {add: ['vip'], remove: ['cold']});
+  await client.conversations.bulkUpdate('c1', ['v1', 'v2'], {status: 'closed', addTags: ['done']}, {dryRun: true});
+  assert.deepEqual(seen.map(s => s.url.split('/').pop()), ['messages_reply', 'conversations_tag', 'conversations_bulk_update']);
+  assert.deepEqual(seen[0].body, {chatbotId: 'c1', conversationId: 'v1', text: 'We will call you today', confirm: true});
+  assert.deepEqual(seen[1].body, {chatbotId: 'c1', conversationId: 'v1', addTags: ['vip'], removeTags: ['cold'], confirm: true});
+  assert.deepEqual(seen[2].body, {chatbotId: 'c1', conversationIds: ['v1', 'v2'], status: 'closed', addTags: ['done'], dryRun: true, confirm: false});
+});

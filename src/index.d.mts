@@ -178,11 +178,28 @@ export declare class CustomerGPT {
   readonly messages: {
     /** Preview answer from a bot. Uses message quota. */
     send(chatbotId: string, message: string, options?: WriteOptions): Promise<unknown>;
+    /**
+     * Send a human reply to the visitor of a conversation, as an agent would from the dashboard.
+     * The conversation must be in human mode (HUMAN_MODE_REQUIRED otherwise). Get the user's approval first.
+     */
+    reply(chatbotId: string, conversationId: string, text: string, options?: WriteOptions): Promise<{ id: string; text: string; time?: string; [key: string]: unknown }>;
   };
   readonly conversations: {
     list(chatbotId: string, params?: Pagination & { mode?: 'ai' | 'human'; leadsOnly?: boolean }): Promise<unknown>;
     get(chatbotId: string, conversationId: string, params?: Pagination): Promise<unknown>;
     update(chatbotId: string, conversationId: string, params: { status?: 'open' | 'closed'; mode?: 'ai' | 'human' }, options?: WriteOptions): Promise<Conversation>;
+    /** Add and remove tags; repeating a call changes nothing. Tags cannot contain commas. */
+    tag(chatbotId: string, conversationId: string, params: { add?: string[]; remove?: string[] }, options?: WriteOptions): Promise<{ conversationId: string; tags: string[] | null }>;
+    /**
+     * Update up to 100 conversations atomically: all change or none. With `dryRun` it returns
+     * `{ matched, conversationIds, notFound }` without changing anything.
+     */
+    bulkUpdate(
+      chatbotId: string,
+      conversationIds: string[],
+      params: { status?: 'open' | 'closed'; mode?: 'ai' | 'human'; addTags?: string[]; removeTags?: string[] },
+      options?: WriteOptions,
+    ): Promise<{ updated?: number; conversations?: Conversation[]; matched?: number; conversationIds?: string[]; notFound?: string[]; dryRun?: true }>;
   };
   readonly leads: {
     /** Conversations that captured a lead. */
