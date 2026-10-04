@@ -18,7 +18,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
       # Trusted publishing requires npm 11.5.1 or later.
       - run: npm install -g npm@^11.5.1
       - name: Check tag matches package.json
@@ -29,4 +28,5 @@ jobs:
           if [ "$TAG" != "v$version" ]; then echo "::error::Tag $TAG does not match package.json version $version"; exit 1; fi
       - run: npm ci
       - run: npm test
-      - run: npm publish --access public
+      # --loglevel verbose shows the OIDC token exchange if publishing fails.
+      - run: npm publish --access public --loglevel verbose
