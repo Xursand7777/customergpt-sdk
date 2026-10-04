@@ -47,7 +47,7 @@ Draft tokens are secrets and expire after 24 hours.
 
 | Resource | Methods |
 | --- | --- |
-| `chatbots` | `list`, `get`, `create`, `update`, `installSnippet` |
+| `chatbots` | `list`, `get`, `create`, `update`, `delete`, `installSnippet` |
 | `knowledge` | `list`, `addWebsite`, `addText`, `resync`, `delete` |
 | `messages` | `send` |
 | `conversations` | `list`, `get`, `update` |
@@ -64,6 +64,7 @@ Methods that change data apply immediately. Pass `{ dryRun: true }` as the last 
 
 ```ts
 await client.knowledge.delete(botId, sourceId, { dryRun: true });
+await client.chatbots.delete(botId, { dryRun: true }); // { name, sources, conversations }
 ```
 
 ### Errors

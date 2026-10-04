@@ -76,3 +76,13 @@ test('rejects unsafe base URLs and action names', async () => {
   assert.equal(new CustomerGPT({baseUrl: 'http://localhost:3000', fetch() {}}).baseUrl, 'http://localhost:3000');
   await assert.rejects(new CustomerGPT({fetch() {}}).call('../admin'), {code: 'INVALID_ACTION'});
 });
+
+test('chatbots.delete confirms by default and supports a dry run', async () => {
+  const {fetch, seen} = mockFetch(() => ({body: {ok: true, data: {chatbotId: 'c1', name: 'Bot', sources: 1, conversations: 2}}}));
+  const client = new CustomerGPT({apiKey: 'k', fetch});
+  await client.chatbots.delete('c1', {dryRun: true});
+  await client.chatbots.delete('c1');
+  assert.equal(seen[0].url.endsWith('/chatbots_delete'), true);
+  assert.deepEqual(seen[0].body, {chatbotId: 'c1', dryRun: true, confirm: false});
+  assert.deepEqual(seen[1].body, {chatbotId: 'c1', confirm: true});
+});

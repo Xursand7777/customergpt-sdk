@@ -45,6 +45,7 @@ export class CustomerGPT {
       get: chatbotId => call('chatbots_get', {chatbotId}),
       create: (params, options) => call('chatbots_create', write(params, options)),
       update: (chatbotId, params, options) => call('chatbots_update', write({chatbotId, ...params}, options)),
+      delete: (chatbotId, options) => call('chatbots_delete', write({chatbotId}, options)),
       installSnippet: chatbotId => call('installation_snippet', {chatbotId}),
     });
     this.knowledge = Object.freeze({

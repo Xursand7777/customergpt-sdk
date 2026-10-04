@@ -44,6 +44,16 @@ export interface Chatbot {
   quickPrompts?: string[];
   [key: string]: unknown;
 }
+export interface ChatbotDeletion {
+  chatbotId: string;
+  name: string;
+  /** Knowledge sources removed (or that would be, in a dry run). */
+  sources: number;
+  /** Conversations removed, including leads. */
+  conversations: number;
+  deleted?: true;
+  dryRun?: true;
+}
 export interface KnowledgeSource { id: string; name: string; [key: string]: unknown }
 export interface Conversation { id: string; status?: 'open' | 'closed'; mode?: 'ai' | 'human'; [key: string]: unknown }
 
@@ -82,6 +92,8 @@ export declare class CustomerGPT {
     get(chatbotId: string): Promise<Chatbot>;
     create(params: { name: string; websiteUrl: string }, options?: WriteOptions): Promise<Chatbot>;
     update(chatbotId: string, params: { name?: string; websiteUrl?: string; welcomeMessage?: string; primaryColor?: string; quickPrompts?: string[] }, options?: WriteOptions): Promise<Chatbot>;
+    /** Permanently delete a chatbot with its knowledge, conversations and leads. Refused while it is training. With `dryRun` it returns what would be removed. */
+    delete(chatbotId: string, options?: WriteOptions): Promise<ChatbotDeletion>;
     installSnippet(chatbotId: string): Promise<unknown>;
   };
   readonly knowledge: {
